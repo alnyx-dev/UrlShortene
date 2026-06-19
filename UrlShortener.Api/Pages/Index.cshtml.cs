@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using UrlShortener.Application.Services;
 
@@ -31,7 +32,15 @@ public class IndexModel : PageModel
 
         try
         {
-            var link = await _service.CreateShortLinkAsync(OriginalUrl, null, ct);
+            Guid? ownerId = null;
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (claim != null)
+                    ownerId = Guid.Parse(claim.Value);
+            }
+
+            var link = await _service.CreateShortLinkAsync(OriginalUrl, ownerId, ct);
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             GeneratedShortUrl = $"{baseUrl}/{link.ShortCode}";
         }

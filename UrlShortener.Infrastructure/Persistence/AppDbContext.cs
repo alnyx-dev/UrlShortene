@@ -19,6 +19,10 @@ public class AppDbContext : DbContext
             .IsUnique();
 
         modelBuilder.Entity<ShortLink>()
+            .HasIndex(x => x.ShortCode)
+            .IsUnique();
+
+        modelBuilder.Entity<ShortLink>()
             .HasOne<User>()
             .WithMany(x => x.ShortLinks)
             .HasForeignKey(x => x.OwnerId)

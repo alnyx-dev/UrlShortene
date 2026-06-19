@@ -1,0 +1,24 @@
+@page
+@model UrlShortener.Api.Pages.RegisterModel
+@{
+    ViewData["Title"] = "Регистрация";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+}
+<div class="card">
+    <h1>Регистрация</h1>
+    <form method="post" asp-page="/Register">
+        <input type="hidden" asp-for="ReturnUrl" />
+        <label class="label">Email</label>
+        <input type="email" asp-for="Email" placeholder="you@example.com" required />
+        <label class="label">Пароль</label>
+        <input type="password" asp-for="Password" placeholder="Минимум 6 символов" required />
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="error">@Model.ErrorMessage</div>
+    }
+    <p style="margin-top:16px;font-size:14px;text-align:center;">
+        Уже есть аккаунт? <a href="/Login">Войти</a>
+    </p>
+</div>

@@ -1,0 +1,37 @@
+@page
+@model UrlShortener.Api.Pages.MyLinksModel
+@{
+    ViewData["Title"] = "Мои ссылки";
+    Layout = "/Pages/Shared/_Layout.cshtml";
+}
+<div class="card">
+    <h1>Мои ссылки</h1>
+    @if (Model.Links.Count == 0)
+    {
+        <div class="empty">У вас пока нет ссылок. <a href="/">Создать первую</a></div>
+    }
+    else
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Короткий код</th>
+                    <th>Оригинальный URL</th>
+                    <th>Создана</th>
+                    <th>Клики</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var link in Model.Links)
+                {
+                    <tr>
+                        <td><a href="/@link.ShortCode" target="_blank">@link.ShortCode</a></td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@link.OriginalUrl</td>
+                        <td>@link.CreatedAt.ToString("dd.MM.yyyy")</td>
+                        <td>@link.ClicksCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

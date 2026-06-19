@@ -31,6 +31,12 @@ public class ShortLinkRepository : IShortLinkRepository
         return result;
     }
 
+    public async Task<IReadOnlyList<ShortLink>> GetByOwnerAsync(Guid ownerId, CancellationToken ct)
+        => await _context.ShortLinks
+            .Where(x => x.OwnerId == ownerId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(ct);
+
     public async Task AddClickAsync(ClickEvent click, CancellationToken ct)
     {
         _context.ClickEvents.Add(click);

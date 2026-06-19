@@ -39,4 +39,7 @@ public class ShortLinkService
         if (link == null || link.IsExpired()) return null;
         return link;
     }
+
+    public async Task<IReadOnlyList<ShortLink>> GetMyLinksAsync(Guid ownerId, CancellationToken ct)
+        => await _repository.GetByOwnerAsync(ownerId, ct);
 }
