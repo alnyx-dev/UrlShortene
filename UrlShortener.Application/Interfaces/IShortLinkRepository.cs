@@ -9,4 +9,5 @@ public interface IShortLinkRepository
     Task<long> GetNextSequenceValueAsync(CancellationToken ct);
     Task AddClickAsync(ClickEvent click, CancellationToken ct);
     Task<IReadOnlyList<ShortLink>> GetByOwnerAsync(Guid ownerId, CancellationToken ct);
+    Task<List<ClickEvent>> GetClicksByLinkAsync(Guid linkId, DateTime from, DateTime to, CancellationToken ct);
 }

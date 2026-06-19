@@ -19,6 +19,7 @@
                     <th>Оригинальный URL</th>
                     <th>Создана</th>
                     <th>Клики</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -29,6 +30,7 @@
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@link.OriginalUrl</td>
                         <td>@link.CreatedAt.ToString("dd.MM.yyyy")</td>
                         <td>@link.ClicksCount</td>
+                        <td><a href="/LinkStats/@link.ShortCode" style="font-size:13px;">Статистика</a></td>
                     </tr>
                 }
             </tbody>

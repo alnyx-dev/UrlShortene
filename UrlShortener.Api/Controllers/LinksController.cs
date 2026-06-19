@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UAParser;
 using UrlShortener.Application.DTOs;
 using UrlShortener.Application.Interfaces;
 using UrlShortener.Application.Services;
@@ -64,6 +65,21 @@ public class LinksController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("{code}/stats")]
+    [Authorize]
+    public async Task<IActionResult> GetStats(string code, [FromQuery] int? month, [FromQuery] int? year, CancellationToken ct)
+    {
+        var userId = GetUserId();
+        var now = DateTime.UtcNow;
+        var statsMonth = month ?? now.Month;
+        var statsYear = year ?? now.Year;
+
+        var stats = await _service.GetLinkStatsAsync(code, userId, statsMonth, statsYear, ct);
+        if (stats == null) return NotFound();
+
+        return Ok(stats);
+    }
+
     private Guid GetUserId()
     {
         var claim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -89,18 +105,44 @@ public class RedirectController : ControllerBase
         var link = await _service.ResolveAsync(code, ct);
         if (link == null) return NotFound();
 
+        var userAgent = Request.Headers.UserAgent.ToString();
+        var deviceType = ParseDeviceType(userAgent);
+
         var click = new ClickEvent
         {
             Id = Guid.NewGuid(),
             ShortLinkId = link.Id,
             Timestamp = DateTime.UtcNow,
             IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = Request.Headers.UserAgent.ToString(),
+            UserAgent = userAgent,
+            DeviceType = deviceType,
             Referrer = Request.Headers.Referer.ToString()
         };
 
         _ = _repository.AddClickAsync(click, ct);
 
         return Redirect(link.OriginalUrl);
+    }
+
+    private static string ParseDeviceType(string userAgent)
+    {
+        if (string.IsNullOrEmpty(userAgent)) return "Other";
+
+        var parser = Parser.GetDefault();
+        var clientInfo = parser.Parse(userAgent);
+
+        var device = clientInfo.Device.Family.ToLower();
+        if (device.Contains("phone") || device.Contains("android") && !device.Contains("tablet"))
+            return "Mobile";
+        if (device.Contains("ipad") || device.Contains("tablet"))
+            return "Tablet";
+        if (device.Contains("spider") || device.Contains("bot"))
+            return "Bot";
+
+        var os = clientInfo.OS.Family.ToLower();
+        if (os is "windows" or "mac os x" or "linux" or "chrome os")
+            return "Desktop";
+
+        return "Other";
     }
 }

@@ -1,3 +1,4 @@
+using UrlShortener.Application.DTOs;
 using UrlShortener.Application.Interfaces;
 using UrlShortener.Domain.Entities;
 
@@ -42,4 +43,45 @@ public class ShortLinkService
 
     public async Task<IReadOnlyList<ShortLink>> GetMyLinksAsync(Guid ownerId, CancellationToken ct)
         => await _repository.GetByOwnerAsync(ownerId, ct);
+
+    public async Task<LinkStatsResponse?> GetLinkStatsAsync(string code, Guid? requestingUserId, int month, int year, CancellationToken ct)
+    {
+        var link = await _repository.GetByCodeAsync(code, ct);
+        if (link == null) return null;
+
+        if (requestingUserId.HasValue && link.OwnerId != requestingUserId.Value)
+            return null;
+
+        var from = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var to = from.AddMonths(1);
+
+        var clicks = await _repository.GetClicksByLinkAsync(link.Id, from, to, ct);
+
+        var clicksByDay = clicks
+            .GroupBy(c => c.Timestamp.Date)
+            .Select(g => new DailyClicks(g.Key, g.Count()))
+            .OrderBy(d => d.Date)
+            .ToList();
+
+        var byDevice = clicks
+            .GroupBy(c => c.DeviceType ?? "Unknown")
+            .Select(g => new DeviceStat(g.Key, g.Count()))
+            .OrderByDescending(d => d.Count)
+            .ToList();
+
+        var byReferrer = clicks
+            .GroupBy(c => string.IsNullOrEmpty(c.Referrer) ? "Direct" : c.Referrer)
+            .Select(g => new ReferrerStat(g.Key == "Direct" ? null : g.Key, g.Count()))
+            .OrderByDescending(r => r.Count)
+            .ToList();
+
+        return new LinkStatsResponse(
+            link.ShortCode,
+            link.OriginalUrl,
+            clicks.Count,
+            clicksByDay,
+            byDevice,
+            byReferrer
+        );
+    }
 }

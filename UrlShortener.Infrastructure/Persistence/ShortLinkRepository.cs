@@ -37,6 +37,12 @@ public class ShortLinkRepository : IShortLinkRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<List<ClickEvent>> GetClicksByLinkAsync(Guid linkId, DateTime from, DateTime to, CancellationToken ct)
+        => await _context.ClickEvents
+            .Where(x => x.ShortLinkId == linkId && x.Timestamp >= from && x.Timestamp < to)
+            .OrderBy(x => x.Timestamp)
+            .ToListAsync(ct);
+
     public async Task AddClickAsync(ClickEvent click, CancellationToken ct)
     {
         _context.ClickEvents.Add(click);
