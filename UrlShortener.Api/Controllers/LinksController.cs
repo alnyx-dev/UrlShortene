@@ -92,11 +92,13 @@ public class RedirectController : ControllerBase
 {
     private readonly ShortLinkService _service;
     private readonly IShortLinkRepository _repository;
+    private readonly IGeoIpClient _geoIpClient;
 
-    public RedirectController(ShortLinkService service, IShortLinkRepository repository)
+    public RedirectController(ShortLinkService service, IShortLinkRepository repository, IGeoIpClient geoIpClient)
     {
         _service = service;
         _repository = repository;
+        _geoIpClient = geoIpClient;
     }
 
     [HttpGet("/{code}")]
@@ -107,19 +109,31 @@ public class RedirectController : ControllerBase
 
         var userAgent = Request.Headers.UserAgent.ToString();
         var deviceType = ParseDeviceType(userAgent);
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
 
         var click = new ClickEvent
         {
             Id = Guid.NewGuid(),
             ShortLinkId = link.Id,
             Timestamp = DateTime.UtcNow,
-            IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            IpAddress = ipAddress,
             UserAgent = userAgent,
             DeviceType = deviceType,
             Referrer = Request.Headers.Referer.ToString()
         };
 
-        _ = _repository.AddClickAsync(click, ct);
+        await _repository.AddClickAsync(click, ct);
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var country = await _geoIpClient.GetCountryAsync(ipAddress, CancellationToken.None);
+                if (country != null)
+                    await _repository.UpdateClickCountryAsync(click.Id, country, CancellationToken.None);
+            }
+            catch { }
+        });
 
         return Redirect(link.OriginalUrl);
     }

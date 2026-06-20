@@ -43,6 +43,16 @@ public class ShortLinkRepository : IShortLinkRepository
             .OrderBy(x => x.Timestamp)
             .ToListAsync(ct);
 
+    public async Task UpdateClickCountryAsync(Guid clickId, string country, CancellationToken ct)
+    {
+        var click = await _context.ClickEvents.FindAsync(new object[] { clickId }, ct);
+        if (click != null)
+        {
+            click.Country = country;
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
     public async Task AddClickAsync(ClickEvent click, CancellationToken ct)
     {
         _context.ClickEvents.Add(click);
@@ -53,4 +63,11 @@ public class ShortLinkRepository : IShortLinkRepository
         if (link != null) link.ClicksCount++;
         await _context.SaveChangesAsync(ct);
     }
+
+    public async Task<List<(DateTime Date, int Count)>> GetDailyStatsAsync(Guid linkId, DateTime from, DateTime to, CancellationToken ct)
+        => await _context.DailyStats
+            .Where(x => x.LinkId == linkId && x.Date >= from && x.Date < to)
+            .OrderBy(x => x.Date)
+            .Select(x => new ValueTuple<DateTime, int>(x.Date, x.ClicksCount))
+            .ToListAsync(ct);
 }

@@ -55,13 +55,13 @@ public class ShortLinkService
         var from = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var to = from.AddMonths(1);
 
-        var clicks = await _repository.GetClicksByLinkAsync(link.Id, from, to, ct);
-
-        var clicksByDay = clicks
-            .GroupBy(c => c.Timestamp.Date)
-            .Select(g => new DailyClicks(g.Key, g.Count()))
-            .OrderBy(d => d.Date)
+        var clicksByDay = (await _repository.GetDailyStatsAsync(link.Id, from, to, ct))
+            .Select(d => new DailyClicks(d.Date, d.Count))
             .ToList();
+
+        var totalClicks = clicksByDay.Sum(d => d.Count);
+
+        var clicks = await _repository.GetClicksByLinkAsync(link.Id, from, to, ct);
 
         var byDevice = clicks
             .GroupBy(c => c.DeviceType ?? "Unknown")
@@ -75,13 +75,21 @@ public class ShortLinkService
             .OrderByDescending(r => r.Count)
             .ToList();
 
+        var byCountry = clicks
+            .Where(c => !string.IsNullOrEmpty(c.Country))
+            .GroupBy(c => c.Country!)
+            .Select(g => new CountryStat(g.Key, g.Count()))
+            .OrderByDescending(c => c.Count)
+            .ToList();
+
         return new LinkStatsResponse(
             link.ShortCode,
             link.OriginalUrl,
-            clicks.Count,
+            totalClicks,
             clicksByDay,
             byDevice,
-            byReferrer
+            byReferrer,
+            byCountry
         );
     }
 }

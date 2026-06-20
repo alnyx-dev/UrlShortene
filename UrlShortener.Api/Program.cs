@@ -5,7 +5,9 @@ using Microsoft.IdentityModel.Tokens;
 using UrlShortener.Application.Interfaces;
 using UrlShortener.Application.Services;
 using UrlShortener.Infrastructure.Auth;
+using UrlShortener.Infrastructure.GeoIp;
 using UrlShortener.Infrastructure.Persistence;
+using UrlShortener.Infrastructure.Stats;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,8 @@ builder.Services.AddScoped<ShortLinkService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHttpClient<IGeoIpClient, GeoIpClient>();
+builder.Services.AddHostedService<StatsAggregationService>();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"]!;

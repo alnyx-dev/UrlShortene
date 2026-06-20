@@ -28,18 +28,22 @@
         <a href="?code=@Model.Code&month=@nextMonth&year=@nextYear" style="color:#2563eb;">@Model.MonthName() @(nextYear) →</a>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:24px;">
         <div style="text-align:center;padding:16px;background:#f0fdf4;border-radius:8px;">
             <div style="font-size:28px;font-weight:700;color:#16a34a;">@Model.Stats.TotalClicks</div>
-            <div style="font-size:12px;color:#6b7280;">Кликов за месяц</div>
+            <div style="font-size:12px;color:#6b7280;">Кликов</div>
         </div>
         <div style="text-align:center;padding:16px;background:#eff6ff;border-radius:8px;">
             <div style="font-size:28px;font-weight:700;color:#2563eb;">@Model.Stats.ByDevice.Count</div>
-            <div style="font-size:12px;color:#6b7280;">Типов устройств</div>
+            <div style="font-size:12px;color:#6b7280;">Устройств</div>
         </div>
         <div style="text-align:center;padding:16px;background:#fef3c7;border-radius:8px;">
             <div style="font-size:28px;font-weight:700;color:#d97706;">@Model.Stats.ByReferrer.Count</div>
             <div style="font-size:12px;color:#6b7280;">Рефереров</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:#fce7f3;border-radius:8px;">
+            <div style="font-size:28px;font-weight:700;color:#db2777;">@Model.Stats.ByCountry.Count</div>
+            <div style="font-size:12px;color:#6b7280;">Стран</div>
         </div>
     </div>
 
@@ -100,6 +104,27 @@
                     <tr>
                         <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@(r.Referrer ?? "Прямой переход")</td>
                         <td>@r.Count</td>
+                        <td>@pct.ToString("F1")%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (Model.Stats.ByCountry.Count > 0)
+    {
+        <h2 style="font-size:16px;margin-top:24px;margin-bottom:12px;">По странам</h2>
+        <table>
+            <thead>
+                <tr><th>Страна</th><th>Клики</th><th>Доля</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Stats.ByCountry)
+                {
+                    var pct = Model.Stats.TotalClicks > 0 ? (c.Count * 100.0 / Model.Stats.TotalClicks) : 0;
+                    <tr>
+                        <td>@c.Country</td>
+                        <td>@c.Count</td>
                         <td>@pct.ToString("F1")%</td>
                     </tr>
                 }

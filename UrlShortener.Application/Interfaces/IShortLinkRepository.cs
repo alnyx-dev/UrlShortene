@@ -10,4 +10,6 @@ public interface IShortLinkRepository
     Task AddClickAsync(ClickEvent click, CancellationToken ct);
     Task<IReadOnlyList<ShortLink>> GetByOwnerAsync(Guid ownerId, CancellationToken ct);
     Task<List<ClickEvent>> GetClicksByLinkAsync(Guid linkId, DateTime from, DateTime to, CancellationToken ct);
+    Task UpdateClickCountryAsync(Guid clickId, string country, CancellationToken ct);
+    Task<List<(DateTime Date, int Count)>> GetDailyStatsAsync(Guid linkId, DateTime from, DateTime to, CancellationToken ct);
 }
